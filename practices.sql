@@ -239,3 +239,23 @@ WHERE toplam_alisveris_sayisi =
 )
 
 ORDER BY last_order_channel;
+
+
+-- 16. En son alışveriş yapan kişinin ID’ sini getiren sorguyu yazınız. (Max son tarihte birden fazla alışveriş yapan ID bulunmakta.
+--Bunları da getiriniz.)
+SELECT
+    last_order_date,
+    master_id
+FROM flo
+
+-- Son alışveriş tarihi, tablodaki en büyük tarihe eşit olanları seçiyoruz
+WHERE last_order_date =
+(
+    SELECT MAX(last_order_date)
+    FROM flo
+)
+
+ORDER BY master_id;
+
+
+
