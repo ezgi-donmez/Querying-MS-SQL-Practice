@@ -1,18 +1,18 @@
 -- Customers isimli bir veritabanı ve verilen veri setindeki değişkenleri içerecek FLO isimli bir tablo oluşturunuz.
 
--- 2. Kaç farklı müşterinin alışveriş yaptığını gösterecek sorguyu yazınız.
+2. Kaç farklı müşterinin alışveriş yaptığını gösterecek sorguyu yazınız.
 select count (master_id) 
   From flo;
 
 
--- 3. Toplam yapılan alışveriş sayısı ve ciroyu getirecek sorguyu yazınız.
+3. Toplam yapılan alışveriş sayısı ve ciroyu getirecek sorguyu yazınız.
 select 
 	sum(order_num_total_ever_online + order_num_total_ever_online) as toplam_alisveris, 
 	sum(customer_value_total_ever_online + customer_value_total_ever_offline) as toplam_ciro
 From flo;
 
 
--- 4. Alışveriş başına ortalama ciroyu getirecek sorguyu yazınız.
+4. Alışveriş başına ortalama ciroyu getirecek sorguyu yazınız.
 select 
 	master_id,
 	(customer_value_total_ever_online + customer_value_total_ever_offline) / 
@@ -21,8 +21,8 @@ select
 From flo;
 
 
--- 5. En son alışveriş yapılan kanal (last_order_channel) üzerinden yapılan alışverişlerin toplam ciro ve alışveriş sayılarını
--- getirecek sorguyu yazınız.
+5. En son alışveriş yapılan kanal (last_order_channel) üzerinden yapılan alışverişlerin toplam ciro ve alışveriş sayılarını
+getirecek sorguyu yazınız.
 SELECT 
     last_order_channel,
     SUM(customer_value_total_ever_online + customer_value_total_ever_offline) AS toplam_ciro,
@@ -91,8 +91,8 @@ ORDER BY
 
 -- 11. En son alışveriş yapılan kanal (last_order_channel) bazında, en çok ilgi gören kategoriyi ve bu kategoriden ne kadarlık
 -- alışveriş yapıldığını getiren sorguyu yazınız.
--- Önce kanal ve kategori özeti
 
+-- Önce kanal ve kategori özeti
 WITH kategori AS
 (
     SELECT
@@ -131,3 +131,80 @@ WHERE adet =
 )
 
 ORDER BY last_order_channel;
+
+
+-- 12. En çok alışveriş yapan kişinin ID’ sini getiren sorguyu yazınız.
+SELECT TOP 1
+    master_id,
+    order_num_total_ever_online +
+    order_num_total_ever_offline AS alisveris_sayisi
+FROM flo
+ORDER BY alisveris_sayisi DESC;
+
+
+-- 13. En çok alışveriş yapan kişinin alışveriş başına ortalama cirosunu ve alışveriş yapma gün ortalamasını (alışveriş sıklığını)
+--getiren sorguyu yazınız.
+WITH alisveriscanavari AS
+(
+    SELECT TOP 1
+        master_id,
+
+        order_num_total_ever_online +
+        order_num_total_ever_offline AS alisveris_sayisi,
+
+        customer_value_total_ever_online +
+        customer_value_total_ever_offline AS toplam_ciro,
+
+        first_order_date,
+        last_order_date
+
+    FROM flo
+    ORDER BY alisveris_sayisi DESC
+)
+
+SELECT
+    master_id,
+
+    -- Alışveriş başına ortalama ciro
+    toplam_ciro / alisveris_sayisi AS ortalama_ciro,
+
+    -- İki alışveriş arasındaki ortalama gün sayısı
+    DATEDIFF(DAY, first_order_date, last_order_date) * 1.0 /
+    NULLIF(alisveris_sayisi - 1, 0) AS alisveris_frequency
+
+FROM alisveriscanavari;
+
+-- 14. En çok alışveriş yapan (ciro bazında) ilk 100 kişinin alışveriş yapma gün ortalamasını (alışveriş sıklığını) getiren sorguyu
+--yazınız.
+-- Ciro bazinda en cok alisveris yapan ilk 100 musteri
+
+WITH en_cok_ciro_yapan_100_kisi AS
+(
+    SELECT TOP 100
+        master_id,
+        first_order_date,
+        last_order_date,
+
+        -- toplam alisveris sayısı
+        order_num_total_ever_online +
+        order_num_total_ever_offline AS toplam_alisveris_sayisi,
+
+        -- toplam ciro
+        customer_value_total_ever_online +
+        customer_value_total_ever_offline AS toplam_ciro
+
+    FROM flo
+    ORDER BY toplam_ciro DESC
+	)
+
+-- İlk 100 musterinin alisveris frequency
+SELECT
+    AVG(
+        -- Her musteri icin alisveris frequency
+        DATEDIFF(DAY, first_order_date, last_order_date) * 1.0
+        /NULLIF(toplam_alisveris_sayisi - 1, 0)
+    ) AS ilk_100_musterinin_ortalama_gun_araligi
+
+FROM en_cok_ciro_yapan_100_kisi;
+
+
