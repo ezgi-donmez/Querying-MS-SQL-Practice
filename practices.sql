@@ -1,18 +1,18 @@
 -- Customers isimli bir veritabanı ve verilen veri setindeki değişkenleri içerecek FLO isimli bir tablo oluşturunuz.
 
-2. Kaç farklı müşterinin alışveriş yaptığını gösterecek sorguyu yazınız.
+-- 2. Kaç farklı müşterinin alışveriş yaptığını gösterecek sorguyu yazınız.
 select count (master_id) 
   From flo;
 
 
-3. Toplam yapılan alışveriş sayısı ve ciroyu getirecek sorguyu yazınız.
+-- 3. Toplam yapılan alışveriş sayısı ve ciroyu getirecek sorguyu yazınız.
 select 
 	sum(order_num_total_ever_online + order_num_total_ever_online) as toplam_alisveris, 
 	sum(customer_value_total_ever_online + customer_value_total_ever_offline) as toplam_ciro
 From flo;
 
 
-4. Alışveriş başına ortalama ciroyu getirecek sorguyu yazınız.
+-- 4. Alışveriş başına ortalama ciroyu getirecek sorguyu yazınız.
 select 
 	master_id,
 	(customer_value_total_ever_online + customer_value_total_ever_offline) / 
@@ -21,8 +21,8 @@ select
 From flo;
 
 
-5. En son alışveriş yapılan kanal (last_order_channel) üzerinden yapılan alışverişlerin toplam ciro ve alışveriş sayılarını
-getirecek sorguyu yazınız.
+-- 5. En son alışveriş yapılan kanal (last_order_channel) üzerinden yapılan alışverişlerin toplam ciro ve alışveriş sayılarını
+-- getirecek sorguyu yazınız.
 SELECT 
     last_order_channel,
     SUM(customer_value_total_ever_online + customer_value_total_ever_offline) AS toplam_ciro,
@@ -174,10 +174,11 @@ SELECT
 
 FROM alisveriscanavari;
 
+
 -- 14. En çok alışveriş yapan (ciro bazında) ilk 100 kişinin alışveriş yapma gün ortalamasını (alışveriş sıklığını) getiren sorguyu
 --yazınız.
--- Ciro bazinda en cok alisveris yapan ilk 100 musteri
 
+	-- Ciro bazinda en cok alisveris yapan ilk 100 musteri
 WITH en_cok_ciro_yapan_100_kisi AS
 (
     SELECT TOP 100
@@ -197,7 +198,7 @@ WITH en_cok_ciro_yapan_100_kisi AS
     ORDER BY toplam_ciro DESC
 	)
 
--- İlk 100 musterinin alisveris frequency
+	-- İlk 100 musterinin alisveris frequency
 SELECT
     AVG(
         -- Her musteri icin alisveris frequency
@@ -208,3 +209,33 @@ SELECT
 FROM en_cok_ciro_yapan_100_kisi;
 
 
+-- 15. En son alışveriş yapılan kanal (last_order_channel) kırılımında en çok alışveriş yapan müşteriyi getiren sorguyu yazınız.
+WITH musteri_alisverisleri AS
+(
+    SELECT
+        last_order_channel,
+        master_id,
+
+        order_num_total_ever_online +
+        order_num_total_ever_offline AS toplam_alisveris_sayisi
+
+    FROM flo
+)
+
+SELECT
+    last_order_channel,
+    master_id,
+    toplam_alisveris_sayisi
+
+FROM musteri_alisverisleri AS m1
+
+-- kanallarin max alisveris sayisi
+WHERE toplam_alisveris_sayisi =
+(
+    SELECT MAX(m2.toplam_alisveris_sayisi)
+    FROM musteri_alisverisleri AS m2
+
+    WHERE m2.last_order_channel = m1.last_order_channel
+)
+
+ORDER BY last_order_channel;
